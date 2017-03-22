@@ -2,16 +2,17 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
-using System.Web.Http.Description;
 using Microsoft.Bot.Builder.Dialogs;
-using Microsoft.Bot.Builder.FormFlow;
 using Microsoft.Bot.Connector;
 using SandwichOrderBot.Models;
+using Microsoft.Bot.Builder.FormFlow;
 
-namespace SandwichOrderBot.Controllers
+namespace sandwichbot
 {
+    [BotAuthentication]
     public class MessagesController : ApiController
     {
+
         internal static IDialog<SandwichModels.SandwichOrder> MakeRootDialog()
 
         {
@@ -19,68 +20,25 @@ namespace SandwichOrderBot.Controllers
         }
 
 
-        [ResponseType(typeof (void))]
-        public virtual async Task<HttpResponseMessage> Post([FromBody] Activity activity)
 
+        /// <summary>
+        /// POST: api/Messages
+        /// Receive a message from a user and reply to it
+        /// </summary>
+        public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
         {
-            if (activity != null)
-
+            if (activity.Type == ActivityTypes.Message)
             {
-                // one of these will have an interface and process it
-
-                switch (activity.GetActivityType())
-
-                {
-                    case ActivityTypes.Message:
-
-                        await Conversation.SendAsync(activity, MakeRootDialog);
-
-                        break;
-
-
-                    //case ActivityTypes.ConversationUpdate:
-
-                    //case ActivityTypes.ContactRelationUpdate:
-
-                    //case ActivityTypes.Typing:
-
-                    //case ActivityTypes.DeleteUserData:
-
-                    default:
-
-                        HandleSystemMessage(activity);
-                        //Trace.TraceError($"Unknown activity type ignored: {activity.GetActivityType()}");
-                        break;
-                }
+                await Conversation.SendAsync(activity, () => MakeRootDialog());
+            }
+            else
+            {
+                HandleSystemMessage(activity);
             }
             var response = Request.CreateResponse(HttpStatusCode.OK);
             return response;
         }
 
-
-        /// <summary>
-        ///     POST: api/Messages
-        ///     Receive a message from a user and reply to it
-        /// </summary>
-        //public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
-        //{
-        //    if (activity.Type == ActivityTypes.Message)
-        //    {
-        //        ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
-        //        // calculate something for us to return
-        //        int length = (activity.Text ?? string.Empty).Length;
-
-        //        // return our reply to the user
-        //        Activity reply = activity.CreateReply($"You sent {activity.Text} which was {length} characters");
-        //        await connector.Conversations.ReplyToActivityAsync(reply);
-        //    }
-        //    else
-        //    {
-        //        HandleSystemMessage(activity);
-        //    }
-        //    var response = Request.CreateResponse(HttpStatusCode.OK);
-        //    return response;
-        //}
         private Activity HandleSystemMessage(Activity message)
         {
             if (message.Type == ActivityTypes.DeleteUserData)
